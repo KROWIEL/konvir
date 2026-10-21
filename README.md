@@ -114,12 +114,15 @@ layer each system needs.
 
 ## Buying
 
-Konvir converts everything for 14 days, with nothing to sign up for. After that it needs a key,
-which you enter under **Settings → Licence** along with the address you bought it with. One key
-covers every computer you use yourself, and it does not expire.
+Konvir converts everything for 14 days, with nothing to sign up for. After that it needs a key.
+
+A key is issued for one computer. **Settings → Licence** shows that computer's device code —
+send it with your order, and the key that comes back goes in the same place along with the
+address you bought it with. The key does not expire.
 
 Keys are checked on your own machine, so Konvir works offline and keeps working if this site
-ever goes away.
+ever goes away. Nothing about your computer is sent anywhere: the device code is a hash, and
+what it was made from never leaves the machine.
 
 ## Licence
 
