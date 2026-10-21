@@ -68,8 +68,9 @@ it into something else. Results are named after the preset: `photo (Web 1920).jp
 <img src="docs/images/settings.png" width="420" alt="The settings window">
 </div>
 
-Four tabs: general, the wheel's own slices, the quality knobs each conversion uses, and the
-external programs. Changes take effect as you make them — there is no OK button to forget.
+Five tabs: general, the wheel's own slices, the quality knobs each conversion uses, the external
+programs, and your licence. Changes take effect as you make them — there is no OK button to
+forget.
 
 To change the shortcut, click it and press the combination you want. Anything with at least one
 modifier is accepted; if another program already owns it, the window says so instead of leaving
@@ -110,6 +111,15 @@ The code is not signed yet, so SmartScreen will warn on first run.
 
 The conversion core and the interface are already cross-platform; what is missing is the native
 layer each system needs.
+
+## Buying
+
+Konvir converts everything for 14 days, with nothing to sign up for. After that it needs a key,
+which you enter under **Settings → Licence** along with the address you bought it with. One key
+covers every computer you use yourself, and it does not expire.
+
+Keys are checked on your own machine, so Konvir works offline and keeps working if this site
+ever goes away.
 
 ## Licence
 
