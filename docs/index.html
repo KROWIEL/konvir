@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Konvir — конвертер файлов в круговом меню</title>
+<meta name="description" content="Выделите файлы, нажмите сочетание клавиш, выберите сектор. Изображения, аудио, видео, PDF, документы, таблицы, архивы — всё считается на вашей машине.">
+<meta property="og:title" content="Konvir">
+<meta property="og:description" content="Конвертер файлов, живущий в круговом меню.">
+<meta property="og:image" content="https://krowiel.github.io/konvir/images/wheel-convert.ru.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400..900&display=swap" rel="stylesheet">
+<script>
+  // Before first paint, so the page never flashes the wrong language.
+  document.documentElement.lang = localStorage.getItem('konvir-lang')
+    || ((navigator.language || '').startsWith('ru') ? 'ru' : 'en');
+</script>
+<style>
+:root {
+  /* Konvir's own colours, read off the wheel rather than invented for the page. */
+  --ink: #121016;
+  --panel: #1e1b26;
+  --slice: #2a2733;
+  --hub: #19161f;
+  --indigo: #4f46e5;
+  --paper: #eceaf2;
+  --mute: #938ca8;
+  --hair: #2e2a39;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: 'Golos Text', system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* One page carries both languages; the one you are not reading is not rendered at all, so
+   assistive technology walks past it the same way your eye does. Only the unwanted half is
+   touched — saying display:revert on the wanted half would throw away the display every rule
+   below gives it, and turn the screenshots back into inline images. */
+html[lang='ru'] [data-lang='en'],
+html[lang='en'] [data-lang='ru'] { display: none; }
+
+a { color: inherit; }
+
+h1, h2 { line-height: 1.08; letter-spacing: -0.021em; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(2.1rem, 5.2vw, 3.5rem); font-weight: 700; }
+h2 { font-size: clamp(1.45rem, 2.6vw, 1.9rem); font-weight: 600; }
+p { margin: 0; max-width: 60ch; }
+
+.shell { max-width: 1120px; margin: 0 auto; padding: 0 28px; }
+
+section { padding: 84px 0; border-top: 1px solid var(--hair); }
+section > .shell > h2 { margin-bottom: 14px; }
+
+/* ---- masthead ---- */
+
+header { padding: 26px 0; }
+header .shell { display: flex; align-items: center; gap: 20px; }
+
+.wordmark {
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 700; font-size: 1.2rem; letter-spacing: -0.015em;
+  text-decoration: none; margin-right: auto;
+}
+
+/* The tray icon, at the size it is actually drawn in the notification area. */
+.mark { flex: none; }
+
+.langs { display: flex; gap: 2px; font-size: 0.82rem; font-weight: 600; }
+.langs button {
+  font: inherit; color: var(--mute); background: none; cursor: pointer;
+  border: 1px solid transparent; border-radius: 999px; padding: 4px 11px;
+}
+html[lang='ru'] .langs [value='ru'],
+html[lang='en'] .langs [value='en'] { color: var(--paper); border-color: var(--hair); }
+
+/* ---- hero ---- */
+
+.hero .shell {
+  display: grid; gap: 56px 64px; align-items: center;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
+  padding-top: 40px; padding-bottom: 96px;
+}
+.hero p { color: var(--mute); margin-top: 22px; font-size: 1.08rem; }
+
+kbd {
+  font: inherit; font-weight: 600; color: var(--paper);
+  background: var(--panel); border: 1px solid var(--hair);
+  border-radius: 5px; padding: 1px 7px; white-space: nowrap;
+}
+
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 20px; margin-top: 34px; }
+
+.download {
+  display: inline-block; text-decoration: none; font-weight: 600;
+  background: var(--indigo); color: #fff;
+  padding: 13px 26px; border-radius: 11px;
+  transition: background 0.15s;
+}
+.download:hover { background: #5b53f0; }
+
+.terms { color: var(--mute); font-size: 0.9rem; }
+.terms a { text-underline-offset: 3px; }
+.note { margin-top: 26px; max-width: 48ch; }
+
+/* ---- the wheel ---- */
+
+.wheel { width: 100%; height: auto; }
+.wheel path { fill: var(--slice); stroke: var(--slice); stroke-width: 6; stroke-linejoin: round; transition: fill 0.12s, stroke 0.12s; }
+.wheel text { fill: var(--paper); font-weight: 600; text-anchor: middle; pointer-events: none; }
+.wheel .sub { fill: var(--mute); font-size: 15px; font-weight: 500; }
+.wheel .kind { fill: var(--mute); font-size: 13px; font-weight: 600; letter-spacing: 0.1em; }
+.wheel .pick { font-size: 27px; font-weight: 600; }
+.wheel .in-hub { opacity: 0; }
+
+/* The slice under the pointer lights up and names itself in the middle, exactly as it does
+   in the application. With the pointer away, one slice stands lit so the wheel is never
+   a blank diagram. */
+.wheel .lit path { fill: var(--indigo); stroke: var(--indigo); }
+.wheel .lit .in-hub { opacity: 1; }
+.wheel:has(.slice:hover) .lit path { fill: var(--slice); stroke: var(--slice); }
+.wheel:has(.slice:hover) .lit .in-hub { opacity: 0; }
+.wheel .slice:hover path { fill: var(--indigo); stroke: var(--indigo); }
+.wheel .slice:hover .in-hub { opacity: 1; }
+
+/* ---- a line that is the whole argument ---- */
+
+.privacy p { font-size: clamp(1.45rem, 3.2vw, 2.1rem); line-height: 1.24; max-width: 19ch; font-weight: 600; letter-spacing: -0.022em; }
+.privacy .sub { font-size: 1.05rem; line-height: 1.6; max-width: 54ch; font-weight: 400; letter-spacing: 0; color: var(--mute); margin-top: 20px; }
+
+/* ---- three wheels ---- */
+
+.wheels { display: grid; gap: 30px; grid-template-columns: repeat(3, 1fr); margin-top: 48px; }
+.wheels img { width: 100%; height: auto; display: block; border-radius: 14px; background: var(--panel); }
+.wheels h3 { font-size: 1.05rem; font-weight: 600; margin: 18px 0 4px; }
+.wheels p { color: var(--mute); font-size: 0.93rem; line-height: 1.5; }
+
+.presets { margin-top: 56px; color: var(--mute); }
+.presets strong { color: var(--paper); font-weight: 600; }
+
+/* ---- formats ---- */
+
+.formats { margin-top: 36px; }
+.formats div {
+  display: grid; gap: 4px 28px; grid-template-columns: 148px minmax(0, 1fr) minmax(0, 1fr);
+  padding: 15px 0; border-top: 1px solid var(--hair); align-items: baseline;
+}
+.formats div:last-child { border-bottom: 1px solid var(--hair); }
+.formats dt { font-weight: 600; font-size: 0.97rem; }
+.formats dd { margin: 0; font-size: 0.93rem; color: var(--mute); }
+.formats .out { color: var(--paper); }
+
+/* ---- price ---- */
+
+.plans { display: flex; flex-wrap: wrap; gap: 0 52px; margin: 40px 0 36px; }
+.plans > div { padding: 4px 52px 4px 0; border-right: 1px solid var(--hair); }
+.plans > div:last-child { border-right: 0; padding-right: 0; }
+.plans dt { color: var(--mute); font-size: 0.9rem; }
+.plans dd { margin: 2px 0 0; font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; }
+.plans dd small { display: block; font-size: 0.85rem; font-weight: 400; color: var(--mute); letter-spacing: 0; }
+
+/* ---- footer ---- */
+
+footer { border-top: 1px solid var(--hair); padding: 40px 0 64px; color: var(--mute); font-size: 0.88rem; }
+footer .shell { display: flex; flex-wrap: wrap; gap: 10px 26px; }
+footer a { text-decoration: none; }
+footer a:hover { color: var(--paper); text-decoration: underline; text-underline-offset: 3px; }
+footer .rights { margin-left: auto; }
+
+:focus-visible { outline: 2px solid var(--indigo); outline-offset: 3px; border-radius: 4px; }
+
+@media (max-width: 860px) {
+  .hero .shell { grid-template-columns: minmax(0, 1fr); padding-bottom: 64px; }
+  .hero figure { max-width: 340px; }
+  .wheels { grid-template-columns: minmax(0, 1fr); gap: 40px; }
+  .formats div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .formats .src::before { content: '← '; }
+  .formats .out::before { content: '→ '; }
+  section { padding: 60px 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="shell">
+    <a class="wordmark" href="#">
+      <svg class="mark" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+        <circle cx="11" cy="11" r="8.4" fill="none" stroke="#4f46e5" stroke-width="2.2"/>
+        <circle cx="11" cy="11" r="2.9" fill="#4f46e5"/>
+      </svg>
+      Konvir
+    </a>
+    <div class="langs">
+      <button value="ru" lang="ru">Рус</button>
+      <button value="en" lang="en">Eng</button>
+    </div>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="shell">
+    <div>
+      <h1 data-lang="ru">Конвертер файлов, живущий в круговом меню</h1>
+      <h1 data-lang="en">A file converter that lives on a radial menu</h1>
+
+      <p data-lang="ru">Выделите файлы в Проводнике и нажмите <kbd>Ctrl</kbd> <kbd>Alt</kbd>
+        <kbd>Space</kbd>. Колесо откроется под курсором и покажет только то, что подходит
+        выделенному. Щёлкните сектор — результат ляжет рядом с исходником.</p>
+      <p data-lang="en">Select files in Explorer and press <kbd>Ctrl</kbd> <kbd>Alt</kbd>
+        <kbd>Space</kbd>. The wheel opens under the cursor, showing only what fits the
+        selection. Click a slice and the result lands next to the original.</p>
+
+      <div class="actions">
+        <a class="download" href="https://github.com/KROWIEL/konvir/releases/latest"
+           data-lang="ru">Скачать для Windows</a>
+        <a class="download" href="https://github.com/KROWIEL/konvir/releases/latest"
+           data-lang="en">Download for Windows</a>
+        <span class="terms" data-lang="ru">14 дней бесплатно, без регистрации.<br>Windows 10 и 11.</span>
+        <span class="terms" data-lang="en">Free for 14 days, nothing to sign up for.<br>Windows 10 and 11.</span>
+      </div>
+
+      <p class="terms note" data-lang="ru">При запуске Windows предупредит: Konvir пока не
+        подписан. Почему и как сверить загрузку —
+        <a href="https://github.com/KROWIEL/konvir/blob/main/README.ru.md#про-предупреждение-smartscreen">написано прямо</a>.</p>
+      <p class="terms note" data-lang="en">Windows warns on first run: Konvir is not signed yet.
+        Why, and how to check your download, is
+        <a href="https://github.com/KROWIEL/konvir/blob/main/README.md#about-the-smartscreen-warning">said plainly</a>.</p>
+    </div>
+
+    <figure style="margin:0">
+      <!-- One accessible name, swapped with the language: a second <title> would simply be
+           ignored, and display:none on the first would not stop it naming the picture. -->
+      <svg class="wheel" viewBox="-220 -220 440 440" role="img"
+           data-ru="Колесо конвертации: PNG, WEBP, AVIF, TIFF, ICO и PDF вокруг выделенного изображения"
+           data-en="The convert wheel: PNG, WEBP, AVIF, TIFF, ICO and PDF around a selected image">
+        <circle r="208" fill="#1e1b26"/>
+        <circle r="72" fill="#19161f"/>
+        <text class="kind" y="-14" data-lang="ru">КОНВЕРТАЦИЯ</text>
+        <text class="kind" y="-14" data-lang="en">CONVERT</text>
+
+        <g class="slice">
+          <path d="M-88.87,-167.93A190,190 0 0 1 88.87,-167.93L34.80,-74.25A82,82 0 0 0 -34.80,-74.25Z"/>
+          <text y="-129" font-size="20">PNG</text>
+          <text class="pick in-hub" y="22">PNG</text>
+        </g>
+        <g class="slice">
+          <path d="M101.00,-160.93A190,190 0 0 1 189.87,-7.00L81.70,-6.99A82,82 0 0 0 46.91,-67.26Z"/>
+          <text x="117" y="-61" font-size="20">WEBP</text>
+          <text class="pick in-hub" y="22">WEBP</text>
+        </g>
+        <g class="slice lit">
+          <path d="M189.87,7.00A190,190 0 0 1 101.00,160.93L46.91,67.26A82,82 0 0 0 81.70,6.99Z"/>
+          <text x="117" y="75" font-size="20">AVIF</text>
+          <text class="pick in-hub" y="22">AVIF</text>
+        </g>
+        <g class="slice">
+          <path d="M88.87,167.93A190,190 0 0 1 -88.87,167.93L-34.80,74.25A82,82 0 0 0 34.80,74.25Z"/>
+          <text y="143" font-size="20">TIFF</text>
+          <text class="pick in-hub" y="22">TIFF</text>
+        </g>
+        <g class="slice">
+          <path d="M-101.00,160.93A190,190 0 0 1 -189.87,7.00L-81.70,6.99A82,82 0 0 0 -46.91,67.26Z"/>
+          <text x="-117" y="75" font-size="20">ICO</text>
+          <text class="pick in-hub" y="22">ICO</text>
+        </g>
+        <g class="slice">
+          <path d="M-189.87,-7.00A190,190 0 0 1 -101.00,-160.93L-46.91,-67.26A82,82 0 0 0 -81.70,-6.99Z"/>
+          <text x="-117" y="-68" font-size="20">PDF</text>
+          <text class="sub" x="-117" y="-46" data-lang="ru">документ</text>
+          <text class="sub" x="-117" y="-46" data-lang="en">document</text>
+          <text class="pick in-hub" y="22">PDF</text>
+        </g>
+      </svg>
+    </figure>
+  </div>
+</div>
+
+<section class="privacy">
+  <div class="shell">
+    <p data-lang="ru">Ни один файл никуда не отправляется</p>
+    <p class="sub" data-lang="ru">Изображения, аудио, видео, PDF, документы, таблицы,
+      презентации, субтитры и архивы — всё считается на вашей машине.</p>
+    <p data-lang="en">No file is ever uploaded anywhere</p>
+    <p class="sub" data-lang="en">Images, audio, video, PDF, documents, spreadsheets, slides,
+      subtitles and archives — everything runs on your machine.</p>
+  </div>
+</section>
+
+<section>
+  <div class="shell">
+    <h2 data-lang="ru">Три колеса</h2>
+    <h2 data-lang="en">Three wheels</h2>
+    <p data-lang="ru">Между ними переключают <kbd>Tab</kbd> и колёсико мыши. Колесо, которому
+      нечего предложить, не показывается вовсе, так что любой доступный сектор что-то делает.</p>
+    <p data-lang="en">Tab or the scroll wheel switches between them. A wheel with nothing to offer
+      is never shown, so every slice you can reach does something.</p>
+
+    <div class="wheels">
+      <figure style="margin:0">
+        <img src="images/wheel-convert.ru.png" alt="Колесо конвертации" loading="lazy" data-lang="ru">
+        <img src="images/wheel-convert.png" alt="The convert wheel" loading="lazy" data-lang="en">
+        <figcaption>
+          <h3 data-lang="ru">Конвертация</h3>
+          <h3 data-lang="en">Convert</h3>
+          <p data-lang="ru">Один формат в другой.</p>
+          <p data-lang="en">One format into another.</p>
+        </figcaption>
+      </figure>
+      <figure style="margin:0">
+        <img src="images/wheel-tools.ru.png" alt="Колесо инструментов" loading="lazy" data-lang="ru">
+        <img src="images/wheel-tools.png" alt="The tools wheel" loading="lazy" data-lang="en">
+        <figcaption>
+          <h3 data-lang="ru">Инструменты</h3>
+          <h3 data-lang="en">Tools</h3>
+          <p data-lang="ru">Сжать, уменьшить, повернуть, убрать метаданные, упаковать.</p>
+          <p data-lang="en">Compress, resize, rotate, strip metadata, archive.</p>
+        </figcaption>
+      </figure>
+      <figure style="margin:0">
+        <img src="images/wheel-actions.ru.png" alt="Колесо действий" loading="lazy" data-lang="ru">
+        <img src="images/wheel-actions.png" alt="The actions wheel" loading="lazy" data-lang="en">
+        <figcaption>
+          <h3 data-lang="ru">Действия</h3>
+          <h3 data-lang="en">Actions</h3>
+          <p data-lang="ru">Копировать путь и имя, открыть терминал, SHA-256.</p>
+          <p data-lang="en">Copy path, copy name, open a terminal, SHA-256.</p>
+        </figcaption>
+      </figure>
+    </div>
+
+    <p class="presets" data-lang="ru"><strong>Свои секторы.</strong> Пресет — это конвертация,
+      описанная один раз: «Web 1920» как JPEG качества 82 с вычищенными метаданными или
+      «Подкаст» как MP3 128 кбит/с. Каждый становится отдельным сектором с вашим названием, а
+      результат называется по нему: <strong>photo (Web 1920).jpg</strong>.</p>
+    <p class="presets" data-lang="en"><strong>Your own slices.</strong> A preset is a conversion
+      you describe once: “Web 1920” as JPEG at quality 82 with the metadata stripped, or
+      “Podcast” as 128 kbit/s MP3. Each becomes a slice of its own, named by you, and the results
+      are named after it: <strong>photo (Web 1920).jpg</strong>.</p>
+  </div>
+</section>
+
+<section>
+  <div class="shell">
+    <h2 data-lang="ru">Форматы</h2>
+    <h2 data-lang="en">Formats</h2>
+    <p data-lang="ru">Изображения, PDF, таблицы, субтитры и архивы работают без единой установки.
+      Медиа и офисные форматы обрабатывают FFmpeg, Pandoc и LibreOffice — Konvir ставит их по
+      кнопке, от их собственных авторов.</p>
+    <p data-lang="en">Images, PDF, spreadsheets, subtitles and archives work with nothing
+      installed. Media and office formats are handled by FFmpeg, Pandoc and LibreOffice, which
+      Konvir installs at the press of a button, from their own publishers.</p>
+
+    <dl class="formats">
+      <div>
+        <dt data-lang="ru">Изображения</dt><dt data-lang="en">Images</dt>
+        <dd class="src" data-lang="ru">JPG, PNG, WEBP, HEIC, TIFF, AVIF, BMP, GIF, SVG, ICO и 25 raw-форматов</dd>
+        <dd class="src" data-lang="en">JPG, PNG, WEBP, HEIC, TIFF, AVIF, BMP, GIF, SVG, ICO and 25 raw formats</dd>
+        <dd class="out">JPG, PNG, WEBP, AVIF, TIFF, ICO, PDF</dd>
+      </div>
+      <div>
+        <dt data-lang="ru">Аудио</dt><dt data-lang="en">Audio</dt>
+        <dd class="src">MP3, M4A, AAC, WAV, FLAC, OGG, OPUS, AIFF, WMA</dd>
+        <dd class="out">MP3, M4A, WAV, FLAC, OGG, OPUS, AIFF</dd>
+      </div>
+      <div>
+        <dt data-lang="ru">Видео</dt><dt data-lang="en">Video</dt>
+        <dd class="src">MP4, MOV, MKV, WEBM, AVI, WMV, FLV, MPG, 3GP, TS</dd>
+        <dd class="out">MP4, MOV, MKV, WEBM, GIF, MP3</dd>
+      </div>
+      <div>
+        <dt data-lang="ru">Документы</dt><dt data-lang="en">Documents</dt>
+        <dd class="src">DOCX, DOC, ODT, RTF, MD, TXT, HTML, EPUB</dd>
+        <dd class="out">DOCX, PDF, ODT, MD, HTML, TXT, EPUB, RTF</dd>
+      </div>
+      <div>
+        <dt data-lang="ru">Таблицы</dt><dt data-lang="en">Spreadsheets</dt>
+        <dd class="src">XLSX, XLSM, XLS, ODS, CSV, TSV</dd>
+        <dd class="out">XLSX, CSV, TSV, ODS, PDF</dd>
+      </div>
+      <div>
+        <dt data-lang="ru">Презентации</dt><dt data-lang="en">Slides</dt>
+        <dd class="src">PPTX, PPT, ODP</dd>
+        <dd class="out">PDF, PNG, JPG, PPTX, ODP</dd>
+      </div>
+      <div>
+        <dt data-lang="ru">Субтитры</dt><dt data-lang="en">Subtitles</dt>
+        <dd class="src">SRT, VTT</dd>
+        <dd class="out">SRT, VTT, TXT</dd>
+      </div>
+      <div>
+        <dt data-lang="ru">Архивы</dt><dt data-lang="en">Archives</dt>
+        <dd class="src">ZIP, TAR, GZ, BZ2, XZ, RAR, 7Z</dd>
+        <dd class="out">ZIP, TAR, TAR.GZ</dd>
+      </div>
+      <div>
+        <dt>PDF</dt>
+        <dd class="src">PDF</dd>
+        <dd class="out">PNG, JPG, DOCX, TXT, MD, HTML, EPUB</dd>
+      </div>
+    </dl>
+  </div>
+</section>
+
+<section>
+  <div class="shell">
+    <h2 data-lang="ru">Цена</h2>
+    <h2 data-lang="en">Price</h2>
+    <p data-lang="ru">14 дней Konvir конвертирует всё без ограничений. Дальше нужен ключ — он
+      выдаётся на один компьютер и проверяется прямо на нём, поэтому Konvir работает без
+      интернета.</p>
+    <p data-lang="en">For 14 days Konvir converts everything without limits. After that it needs a
+      key. A key is issued for one computer and checked on that computer, so Konvir works
+      offline.</p>
+
+    <dl class="plans">
+      <div>
+        <dt data-lang="ru">Месяц</dt><dt data-lang="en">A month</dt>
+        <dd>2,99 BYN <small>≈ 0,99 $</small></dd>
+      </div>
+      <div>
+        <dt data-lang="ru">Год</dt><dt data-lang="en">A year</dt>
+        <dd>29,99 BYN <small>≈ 10 $</small></dd>
+      </div>
+      <div>
+        <dt data-lang="ru">Пять лет</dt><dt data-lang="en">Five years</dt>
+        <dd>119 BYN <small>≈ 40 $</small></dd>
+      </div>
+    </dl>
+
+    <p data-lang="ru">Оплата на сайте ещё подключается. Пока ключи выдаются вручную: напишите,
+      приложите код устройства из <strong>Настройки → Лицензия</strong>, и ключ придёт в ответ.</p>
+    <p data-lang="en">Payment on this site is still being set up. For now keys are issued by hand:
+      get in touch, include the device code from <strong>Settings → Licence</strong>, and the key
+      comes back by reply.</p>
+
+    <div class="actions">
+      <a class="download" href="https://github.com/KROWIEL/konvir/issues/new" data-lang="ru">Написать</a>
+      <a class="download" href="https://github.com/KROWIEL/konvir/issues/new" data-lang="en">Get in touch</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="shell">
+    <a href="https://github.com/KROWIEL/konvir">GitHub</a>
+    <a href="https://github.com/KROWIEL/konvir/releases" data-lang="ru">Все версии</a>
+    <a href="https://github.com/KROWIEL/konvir/releases" data-lang="en">All releases</a>
+    <a href="https://github.com/KROWIEL/konvir/blob/main/LICENSE" data-lang="ru">Лицензия</a>
+    <a href="https://github.com/KROWIEL/konvir/blob/main/LICENSE" data-lang="en">Licence</a>
+    <a href="https://github.com/KROWIEL/konvir/blob/main/THIRD-PARTY-NOTICES.md" data-lang="ru">Сторонние компоненты</a>
+    <a href="https://github.com/KROWIEL/konvir/blob/main/THIRD-PARTY-NOTICES.md" data-lang="en">Third-party notices</a>
+    <span class="rights">© 2026 Konvir</span>
+  </div>
+</footer>
+
+<script>
+  const wheel = document.querySelector('.wheel');
+  const name = () => wheel.setAttribute('aria-label', wheel.dataset[document.documentElement.lang]);
+  name();
+
+  document.querySelector('.langs').addEventListener('click', e => {
+    if (!e.target.value) return;
+    localStorage.setItem('konvir-lang', e.target.value);
+    document.documentElement.lang = e.target.value;
+    name();
+  });
+</script>
+
+</body>
+</html>
