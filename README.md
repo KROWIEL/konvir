@@ -68,9 +68,12 @@ it into something else. Results are named after the preset: `photo (Web 1920).jp
 <img src="docs/images/settings.png" width="420" alt="The settings window">
 </div>
 
-Five tabs: general, the wheel's own slices, the quality knobs each conversion uses, the external
-programs, and your licence. Changes take effect as you make them — there is no OK button to
-forget.
+Six tabs: general, the wheel's own slices, the quality knobs each conversion uses, the external
+programs, the watched folders, and your licence. Changes take effect as you make them — there is
+no OK button to forget.
+
+Konvir follows the system between its light and dark colours, and the general tab can pin it to
+one of them.
 
 To change the shortcut, click it and press the combination you want. Anything with at least one
 modifier is accepted; if another program already owns it, the window says so instead of leaving
