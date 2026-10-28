@@ -87,8 +87,8 @@ separate command-line processes:
 | Program | Needed for | How to get it |
 |---|---|---|
 | FFmpeg | Audio and video | The **Install** button downloads it, checksum verified |
-| Pandoc | Documents and e-books | The **Install** button, through winget |
-| LibreOffice | DOCX, XLSX, PPTX and ODF | The **Install** button, through winget |
+| Pandoc | Documents and e-books | The **Install** button: through winget on Windows, downloaded and checksum verified on macOS |
+| LibreOffice | DOCX, XLSX, PPTX and ODF | Windows: the **Install** button, through winget. macOS: **Download…** opens libreoffice.org |
 
 Konvir never ships these programs: you install them, on your machine, from their own publishers.
 That separation is deliberate and is kept on purpose: their licences stay with them.
@@ -99,21 +99,60 @@ Everything else — images, PDF, spreadsheets, subtitles, archives — works wit
 
 Windows builds are published on the
 [Releases page](https://github.com/KROWIEL/konvir/releases): an installer and a portable archive.
-The installer puts Konvir in `%LOCALAPPDATA%\Konvir` and can start it with the computer; the
-settings window checks for newer versions.
+The installer puts Konvir in `%LOCALAPPDATA%\Konvir` and can start it with the computer; Konvir
+checks for newer versions on its own and installs them when you next close it.
 
-The code is not signed yet, so SmartScreen will warn on first run.
+Or through the Windows Package Manager, which checks the download against its own checksum:
+
+```
+winget install Konvir.Konvir
+```
+
+### About the SmartScreen warning
+
+Downloading the installer yourself gets you "Windows protected your PC". Choose **More info**
+and then **Run anyway**.
+
+Konvir is not signed with a code signing certificate yet. We would rather say that plainly than
+have you wonder: a certificate costs a few hundred dollars a year, and — this is the part nobody
+mentions — it would not remove the warning either. SmartScreen shows it for signed installers
+too, until a file has been downloaded enough times to have a history. What signing buys is that
+the history carries from one release to the next instead of starting over every time, which is
+worth paying for once there are enough downloads for it to mean anything.
+
+Until then: every release lists the SHA-256 of each file, so you can check that what you
+downloaded is what we built.
+
+```powershell
+Get-FileHash .\Konvir-win-Setup.exe -Algorithm SHA256
+```
+
+### macOS
+
+macOS 13 or later on Apple Silicon (M1 and newer). The same page has an installer,
+`Konvir-osx-Setup.pkg`, and a portable archive. Konvir sits in the menu bar rather than the Dock,
+and the shortcut is ⇧⌘Space.
+
+Konvir is not notarised by Apple yet, so macOS refuses to open it the first time. Open
+**System Settings → Privacy & Security** and choose **Open Anyway**. The first time you open the
+wheel on files selected in Finder, macOS also asks whether Konvir may control Finder: that is how
+it learns which files are selected. Installed for all users, Konvir asks for an administrator
+password once, at its first update.
+
+```sh
+shasum -a 256 Konvir-osx-Setup.pkg
+```
 
 ## Platform support
 
 | | Shortcut | Tray | File manager selection |
 |---|:--:|:--:|:--:|
 | Windows 10/11 | yes | yes | Explorer |
-| macOS | planned | planned | planned |
+| macOS 13+ | yes | menu bar | Finder |
 | Linux | planned | planned | planned |
 
-The conversion core and the interface are already cross-platform; what is missing is the native
-layer each system needs.
+The conversion core and the interface are already cross-platform; what Linux is missing is the
+native layer.
 
 ## Buying
 
