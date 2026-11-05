@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Konvir — бесплатный конвертер файлов в круговом меню для Windows и macOS</title>
+<meta name="description" content="Бесплатный конвертер файлов: выделите файлы, нажмите сочетание клавиш, выберите сектор. Изображения, HEIC, RAW, аудио, видео, PDF, Word, Excel, PowerPoint, субтитры и архивы — всё на вашем компьютере, без загрузки в облако, рекламы и регистрации.">
+<meta name="keywords" content="конвертер файлов, бесплатный конвертер, HEIC в JPG, конвертер видео, конвертер аудио, PDF в Word, DOCX в PDF, WEBP, AVIF, круговое меню, file converter, free file converter, HEIC to JPG, video converter, radial menu, Windows, macOS">
+<meta name="author" content="Andrey Krowiel">
+<meta name="theme-color" content="#121016">
+<link rel="canonical" href="https://krowiel.github.io/konvir/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://krowiel.github.io/konvir/">
+<meta property="og:site_name" content="Konvir">
+<meta property="og:title" content="Konvir — бесплатный конвертер файлов в круговом меню">
+<meta property="og:description" content="Выделил файлы, нажал сочетание клавиш, выбрал сектор. Бесплатно, локально, для Windows и macOS.">
+<meta property="og:image" content="https://krowiel.github.io/konvir/images/wheel-convert.ru.png">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:locale:alternate" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Konvir — a free file converter on a radial menu">
+<meta name="twitter:description" content="Select files, press a shortcut, pick a slice. Free, local, for Windows and macOS.">
+<meta name="twitter:image" content="https://krowiel.github.io/konvir/images/wheel-convert.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Konvir",
+  "description": "A free file converter that lives on a radial menu: images, audio, video, PDF, documents, spreadsheets, slides, subtitles and archives, converted on your own computer.",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Windows 10, Windows 11, macOS 13 or later",
+  "url": "https://krowiel.github.io/konvir/",
+  "downloadUrl": "https://github.com/KROWIEL/konvir/releases/latest",
+  "image": "https://krowiel.github.io/konvir/images/wheel-convert.png",
+  "inLanguage": ["ru", "en"],
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "author": { "@type": "Person", "name": "Andrey Krowiel" }
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400..900&display=swap" rel="stylesheet">
+<script>
+  // Before first paint, so the page never flashes the wrong language.
+  document.documentElement.lang = localStorage.getItem('konvir-lang')
+    || ((navigator.language || '').startsWith('ru') ? 'ru' : 'en');
+</script>
+<style>
+:root {
+  /* Konvir's own colours, read off the wheel rather than invented for the page. */
+  --ink: #121016;
+  --panel: #1e1b26;
+  --slice: #2a2733;
+  --hub: #19161f;
+  --indigo: #4f46e5;
+  --paper: #eceaf2;
+  --mute: #938ca8;
+  --hair: #2e2a39;
+  --free: #4ade80;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: 'Golos Text', system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* One page carries both languages; the one you are not reading is not rendered at all, so
+   assistive technology walks past it the same way your eye does. Only the unwanted half is
+   touched — saying display:revert on the wanted half would throw away the display every rule
+   below gives it, and turn the screenshots back into inline images. */
+html[lang='ru'] [data-lang='en'],
+html[lang='en'] [data-lang='ru'] { display: none; }
+
+a { color: inherit; }
+
+h1, h2 { line-height: 1.08; letter-spacing: -0.021em; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(2.1rem, 5.2vw, 3.5rem); font-weight: 700; }
+h2 { font-size: clamp(1.45rem, 2.6vw, 1.9rem); font-weight: 600; }
+h3 { font-size: 1.05rem; font-weight: 600; margin: 0 0 4px; }
+p { margin: 0; max-width: 60ch; }
+
+.shell { max-width: 1120px; margin: 0 auto; padding: 0 28px; }
+
+section { padding: 84px 0; border-top: 1px solid var(--hair); scroll-margin-top: 12px; }
+section > .shell > h2 { margin-bottom: 14px; }
+.lead { color: var(--mute); }
+
+/* ---- masthead ---- */
+
+header { padding: 26px 0; }
+header .shell { display: flex; align-items: center; gap: 20px; }
+
+.wordmark {
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 700; font-size: 1.2rem; letter-spacing: -0.015em;
+  text-decoration: none; margin-right: auto;
+}
+
+/* The tray icon, at the size it is actually drawn in the notification area. */
+.mark { flex: none; }
+
+nav { display: flex; gap: 22px; font-size: 0.92rem; color: var(--mute); }
+nav a { text-decoration: none; }
+nav a:hover { color: var(--paper); }
+
+.langs { display: flex; gap: 2px; font-size: 0.82rem; font-weight: 600; }
+.langs button {
+  font: inherit; color: var(--mute); background: none; cursor: pointer;
+  border: 1px solid transparent; border-radius: 999px; padding: 4px 11px;
+}
+html[lang='ru'] .langs [value='ru'],
+html[lang='en'] .langs [value='en'] { color: var(--paper); border-color: var(--hair); }
+
+/* ---- hero ---- */
+
+.hero .shell {
+  display: grid; gap: 56px 64px; align-items: center;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
+  padding-top: 40px; padding-bottom: 96px;
+}
+.hero p { color: var(--mute); margin-top: 22px; font-size: 1.08rem; }
+
+.badge {
+  display: inline-block; margin-bottom: 18px;
+  font-size: 0.82rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--free); border: 1px solid color-mix(in srgb, var(--free) 40%, transparent);
+  border-radius: 999px; padding: 3px 12px;
+}
+
+kbd {
+  font: inherit; font-weight: 600; color: var(--paper);
+  background: var(--panel); border: 1px solid var(--hair);
+  border-radius: 5px; padding: 1px 7px; white-space: nowrap;
+}
+
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 34px; }
+
+.download, .button {
+  display: inline-block; text-decoration: none; font: inherit; font-weight: 600;
+  background: var(--indigo); color: #fff; border: 0; cursor: pointer;
+  padding: 13px 26px; border-radius: 11px;
+  transition: background 0.15s;
+}
+.download:hover, .button:hover { background: #5b53f0; }
+.download.alt { background: var(--slice); }
+.download.alt:hover { background: #353140; }
+
+.terms { color: var(--mute); font-size: 0.9rem; }
+.terms a { text-underline-offset: 3px; }
+.note { margin-top: 22px; max-width: 52ch; }
+
+/* ---- the wheel ---- */
+
+.wheel { width: 100%; height: auto; }
+.wheel path { fill: var(--slice); stroke: var(--slice); stroke-width: 6; stroke-linejoin: round; transition: fill 0.12s, stroke 0.12s; }
+.wheel text { fill: var(--paper); font-weight: 600; text-anchor: middle; pointer-events: none; }
+.wheel .sub { fill: var(--mute); font-size: 15px; font-weight: 500; }
+.wheel .kind { fill: var(--mute); font-size: 13px; font-weight: 600; letter-spacing: 0.1em; }
+.wheel .pick { font-size: 27px; font-weight: 600; }
+.wheel .in-hub { opacity: 0; }
+
+/* The slice under the pointer lights up and names itself in the middle, exactly as it does
+   in the application. With the pointer away, one slice stands lit so the wheel is never
+   a blank diagram. */
+.wheel .lit path { fill: var(--indigo); stroke: var(--indigo); }
+.wheel .lit .in-hub { opacity: 1; }
+.wheel:has(.slice:hover) .lit path { fill: var(--slice); stroke: var(--slice); }
+.wheel:has(.slice:hover) .lit .in-hub { opacity: 0; }
+.wheel .slice:hover path { fill: var(--indigo); stroke: var(--indigo); }
+.wheel .slice:hover .in-hub { opacity: 1; }
+
+/* ---- a line that is the whole argument ---- */
+
+.statement p { font-size: clamp(1.45rem, 3.2vw, 2.1rem); line-height: 1.24; max-width: 22ch; font-weight: 600; letter-spacing: -0.022em; }
+.statement .sub { font-size: 1.05rem; line-height: 1.6; max-width: 58ch; font-weight: 400; letter-spacing: 0; color: var(--mute); margin-top: 20px; }
+
+.nots { display: flex; flex-wrap: wrap; gap: 10px; margin: 30px 0 0; padding: 0; list-style: none; }
+.nots li {
+  font-size: 0.93rem; font-weight: 500; padding: 7px 15px;
+  border-radius: 999px; background: var(--panel); border: 1px solid var(--hair);
+}
+.nots li::before { content: '✓'; color: var(--free); font-weight: 700; margin-right: 8px; }
+
+/* ---- three wheels ---- */
+
+.wheels { display: grid; gap: 30px; grid-template-columns: repeat(3, 1fr); margin-top: 48px; }
+.wheels img { width: 100%; height: auto; display: block; border-radius: 14px; background: var(--panel); }
+.wheels h3 { margin-top: 18px; }
+.wheels p { color: var(--mute); font-size: 0.93rem; line-height: 1.5; }
+
+/* ---- features ---- */
+
+.features { display: grid; gap: 18px; grid-template-columns: repeat(3, 1fr); margin-top: 40px; }
+.features article {
+  background: var(--panel); border: 1px solid var(--hair); border-radius: 14px; padding: 22px 24px;
+}
+.features p { color: var(--mute); font-size: 0.93rem; line-height: 1.55; }
+
+/* ---- formats ---- */
+
+.formats { margin-top: 36px; }
+.formats div {
+  display: grid; gap: 4px 28px; grid-template-columns: 148px minmax(0, 1fr) minmax(0, 1fr);
+  padding: 15px 0; border-top: 1px solid var(--hair); align-items: baseline;
+}
+.formats div:last-child { border-bottom: 1px solid var(--hair); }
+.formats dt { font-weight: 600; font-size: 0.97rem; }
+.formats dd { margin: 0; font-size: 0.93rem; color: var(--mute); }
+.formats .out { color: var(--paper); }
+
+/* ---- technology ---- */
+
+.stack { display: grid; gap: 0 40px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 36px 0 0; }
+.stack div { padding: 15px 0; border-top: 1px solid var(--hair); }
+.stack dt { font-weight: 600; font-size: 0.97rem; }
+.stack dd { margin: 2px 0 0; font-size: 0.93rem; color: var(--mute); }
+
+.tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 40px 0 0; padding: 0; list-style: none; }
+.tags a {
+  display: inline-block; text-decoration: none; font-size: 0.86rem; color: var(--mute);
+  padding: 4px 12px; border-radius: 999px; border: 1px solid var(--hair);
+}
+.tags a:hover { color: var(--paper); border-color: var(--mute); }
+
+/* ---- questions ---- */
+
+.faq { margin-top: 30px; max-width: 760px; }
+.faq details { border-top: 1px solid var(--hair); padding: 16px 0; }
+.faq details:last-child { border-bottom: 1px solid var(--hair); }
+.faq summary { font-weight: 600; cursor: pointer; }
+.faq details p { color: var(--mute); margin-top: 10px; }
+
+/* ---- ideas ---- */
+
+.ideas .shell { display: grid; gap: 40px 64px; grid-template-columns: minmax(0, 1fr) minmax(0, 520px); }
+.ideas h2 { margin-bottom: 14px; }
+.ideas form { display: grid; gap: 16px; }
+.ideas label { display: grid; gap: 6px; font-size: 0.92rem; font-weight: 600; }
+.ideas label small { font-weight: 400; color: var(--mute); }
+.ideas input, .ideas textarea {
+  font: inherit; font-size: 0.97rem; color: var(--paper);
+  background: var(--panel); border: 1px solid var(--hair); border-radius: 10px; padding: 11px 14px;
+}
+.ideas textarea { min-height: 128px; resize: vertical; }
+.ideas input:focus, .ideas textarea:focus { outline: 2px solid var(--indigo); outline-offset: 1px; border-color: transparent; }
+.ideas .row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+
+/* ---- footer ---- */
+
+footer { border-top: 1px solid var(--hair); padding: 40px 0 64px; color: var(--mute); font-size: 0.88rem; }
+footer .shell { display: flex; flex-wrap: wrap; gap: 10px 26px; }
+footer a { text-decoration: none; }
+footer a:hover { color: var(--paper); text-decoration: underline; text-underline-offset: 3px; }
+footer .rights { margin-left: auto; }
+
+:focus-visible { outline: 2px solid var(--indigo); outline-offset: 3px; border-radius: 4px; }
+
+@media (max-width: 860px) {
+  nav { display: none; }
+  .hero .shell { grid-template-columns: minmax(0, 1fr); padding-bottom: 64px; }
+  .hero figure { max-width: 340px; }
+  .wheels, .features, .stack, .ideas .shell { grid-template-columns: minmax(0, 1fr); }
+  .wheels { gap: 40px; }
+  .formats div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .formats .src::before { content: '← '; }
+  .formats .out::before { content: '→ '; }
+  section { padding: 60px 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="shell">
+    <a class="wordmark" href="#">
+      <svg class="mark" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+        <circle cx="11" cy="11" r="8.4" fill="none" stroke="#4f46e5" stroke-width="2.2"/>
+        <circle cx="11" cy="11" r="2.9" fill="#4f46e5"/>
+      </svg>
+      Konvir
+    </a>
+    <nav>
+      <a href="#features" data-lang="ru">Возможности</a><a href="#features" data-lang="en">Features</a>
+      <a href="#formats" data-lang="ru">Форматы</a><a href="#formats" data-lang="en">Formats</a>
+      <a href="#ideas" data-lang="ru">Идеи</a><a href="#ideas" data-lang="en">Ideas</a>
+      <a href="https://github.com/KROWIEL/konvir">GitHub</a>
+    </nav>
+    <div class="langs">
+      <button value="ru" lang="ru">Рус</button>
+      <button value="en" lang="en">Eng</button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<div class="hero">
+  <div class="shell">
+    <div>
+      <span class="badge" data-lang="ru">Бесплатно · Windows и macOS</span>
+      <span class="badge" data-lang="en">Free · Windows and macOS</span>
+      <h1 data-lang="ru">Конвертер файлов, живущий в круговом меню</h1>
+      <h1 data-lang="en">A file converter that lives on a radial menu</h1>
+
+      <p data-lang="ru">Выделите файлы и нажмите <kbd>Ctrl</kbd> <kbd>Alt</kbd> <kbd>Space</kbd>
+        (на Mac — <kbd>⇧</kbd> <kbd>⌘</kbd> <kbd>Пробел</kbd>). Колесо откроется под курсором и
+        покажет только то, что подходит выделенному. Щёлкните сектор — результат ляжет рядом с
+        исходником.</p>
+      <p data-lang="en">Select files and press <kbd>Ctrl</kbd> <kbd>Alt</kbd> <kbd>Space</kbd>
+        (<kbd>⇧</kbd> <kbd>⌘</kbd> <kbd>Space</kbd> on a Mac). The wheel opens under the cursor,
+        showing only what fits the selection. Click a slice and the result lands next to the
+        original.</p>
+
+      <div class="actions">
+        <a class="download" href="https://github.com/KROWIEL/konvir/releases/latest/download/Konvir-win-Setup.exe" data-lang="ru">Скачать для Windows</a>
+        <a class="download" href="https://github.com/KROWIEL/konvir/releases/latest/download/Konvir-win-Setup.exe" data-lang="en">Download for Windows</a>
+        <a class="download alt" href="https://github.com/KROWIEL/konvir/releases/latest/download/Konvir-osx-Setup.pkg" data-lang="ru">Скачать для macOS</a>
+        <a class="download alt" href="https://github.com/KROWIEL/konvir/releases/latest/download/Konvir-osx-Setup.pkg" data-lang="en">Download for macOS</a>
+      </div>
+
+      <p class="terms note" data-lang="ru">Windows 10 и 11 · macOS 13 и новее на Apple Silicon.
+        Портативные архивы и все версии — <a href="https://github.com/KROWIEL/konvir/releases">на странице релизов</a>.
+        При первом запуске система предупредит: Konvir пока не подписан. Почему и как сверить
+        загрузку — <a href="https://github.com/KROWIEL/konvir/blob/main/README.ru.md#про-предупреждение-smartscreen">написано прямо</a>.</p>
+      <p class="terms note" data-lang="en">Windows 10 and 11 · macOS 13 or later on Apple Silicon.
+        Portable archives and every version are <a href="https://github.com/KROWIEL/konvir/releases">on the releases page</a>.
+        The system warns on first run: Konvir is not signed yet. Why, and how to check your
+        download, is <a href="https://github.com/KROWIEL/konvir/blob/main/README.md#about-the-smartscreen-warning">said plainly</a>.</p>
+    </div>
+
+    <figure style="margin:0">
+      <!-- One accessible name, swapped with the language: a second <title> would simply be
+           ignored, and display:none on the first would not stop it naming the picture. -->
+      <svg class="wheel" viewBox="-220 -220 440 440" role="img"
+           data-ru="Колесо конвертации: PNG, WEBP, AVIF, TIFF, ICO и PDF вокруг выделенного изображения"
+           data-en="The convert wheel: PNG, WEBP, AVIF, TIFF, ICO and PDF around a selected image">
+        <circle r="208" fill="#1e1b26"/>
+        <circle r="72" fill="#19161f"/>
+        <text class="kind" y="-14" data-lang="ru">КОНВЕРТАЦИЯ</text>
+        <text class="kind" y="-14" data-lang="en">CONVERT</text>
+
+        <g class="slice">
+          <path d="M-88.87,-167.93A190,190 0 0 1 88.87,-167.93L34.80,-74.25A82,82 0 0 0 -34.80,-74.25Z"/>
+          <text y="-129" font-size="20">PNG</text>
+          <text class="pick in-hub" y="22">PNG</text>
+        </g>
+        <g class="slice">
+          <path d="M101.00,-160.93A190,190 0 0 1 189.87,-7.00L81.70,-6.99A82,82 0 0 0 46.91,-67.26Z"/>
+          <text x="117" y="-61" font-size="20">WEBP</text>
+          <text class="pick in-hub" y="22">WEBP</text>
+        </g>
+        <g class="slice lit">
+          <path d="M189.87,7.00A190,190 0 0 1 101.00,160.93L46.91,67.26A82,82 0 0 0 81.70,6.99Z"/>
+          <text x="117" y="75" font-size="20">AVIF</text>
+          <text class="pick in-hub" y="22">AVIF</text>
+        </g>
+        <g class="slice">
+          <path d="M88.87,167.93A190,190 0 0 1 -88.87,167.93L-34.80,74.25A82,82 0 0 0 34.80,74.25Z"/>
+          <text y="143" font-size="20">TIFF</text>
+          <text class="pick in-hub" y="22">TIFF</text>
+        </g>
+        <g class="slice">
+          <path d="M-101.00,160.93A190,190 0 0 1 -189.87,7.00L-81.70,6.99A82,82 0 0 0 -46.91,67.26Z"/>
+          <text x="-117" y="75" font-size="20">ICO</text>
+          <text class="pick in-hub" y="22">ICO</text>
+        </g>
+        <g class="slice">
+          <path d="M-189.87,-7.00A190,190 0 0 1 -101.00,-160.93L-46.91,-67.26A82,82 0 0 0 -81.70,-6.99Z"/>
+          <text x="-117" y="-68" font-size="20">PDF</text>
+          <text class="sub" x="-117" y="-46" data-lang="ru">документ</text>
+          <text class="sub" x="-117" y="-46" data-lang="en">document</text>
+          <text class="pick in-hub" y="22">PDF</text>
+        </g>
+      </svg>
+    </figure>
+  </div>
+</div>
+
+<section class="statement">
+  <div class="shell">
+    <p data-lang="ru">Бесплатно. Целиком. И ни один файл никуда не уходит.</p>
+    <p class="sub" data-lang="ru">Каждый формат и каждая функция — без пробного периода, платной
+      версии и ключей. Изображения, аудио, видео, PDF, документы, таблицы, презентации, субтитры и
+      архивы считаются на вашем компьютере. В интернет Konvir ходит только за своими обновлениями
+      и за FFmpeg или Pandoc, когда вы сами попросите.</p>
+    <p data-lang="en">Free. All of it. And no file ever leaves your computer.</p>
+    <p class="sub" data-lang="en">Every format and every feature, with no trial, no paid edition and
+      no keys. Images, audio, video, PDF, documents, spreadsheets, slides, subtitles and archives
+      are converted on your own machine. Konvir goes online only for its own updates, and for
+      FFmpeg or Pandoc when you ask for them.</p>
+
+    <ul class="nots" data-lang="ru">
+      <li>Без пробного периода</li>
+      <li>Без ключей и оплаты</li>
+      <li>Без рекламы</li>
+      <li>Без регистрации</li>
+      <li>Без загрузки в облако</li>
+      <li>Без ограничений на число файлов</li>
+    </ul>
+    <ul class="nots" data-lang="en">
+      <li>No trial</li>
+      <li>No keys, no payment</li>
+      <li>No ads</li>
+      <li>No account</li>
+      <li>No uploads</li>
+      <li>No limit on the number of files</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="shell">
+    <h2 data-lang="ru">Три колеса</h2>
+    <h2 data-lang="en">Three wheels</h2>
+    <p class="lead" data-lang="ru">Между ними переключают <kbd>Tab</kbd> и колёсико мыши. Колесо,
+      которому нечего предложить, не показывается вовсе, так что любой доступный сектор что-то
+      делает.</p>
+    <p class="lead" data-lang="en">Tab or the scroll wheel switches between them. A wheel with
+      nothing to offer is never shown, so every slice you can reach does something.</p>
+
+    <div class="wheels">
+      <figure style="margin:0">
+        <img src="images/wheel-convert.ru.png" alt="Колесо конвертации" loading="lazy" data-lang="ru">
+        <img src="images/wheel-convert.png" alt="The convert wheel" loading="lazy" data-lang="en">
+        <figcaption>
+          <h3 data-lang="ru">Конвертация</h3>
+          <h3 data-lang="en">Convert</h3>
+          <p data-lang="ru">Один формат в другой.</p>
+          <p data-lang="en">One format into another.</p>
+        </figcaption>
+      </figure>
+      <figure style="margin:0">
+        <img src="images/wheel-tools.ru.png" alt="Колесо инструментов" loading="lazy" data-lang="ru">
+        <img src="images/wheel-tools.png" alt="The tools wheel" loading="lazy" data-lang="en">
+        <figcaption>
+          <h3 data-lang="ru">Инструменты</h3>
+          <h3 data-lang="en">Tools</h3>
+          <p data-lang="ru">Сжать, уменьшить, повернуть, убрать метаданные, упаковать.</p>
+          <p data-lang="en">Compress, resize, rotate, strip metadata, archive.</p>
+        </figcaption>
+      </figure>
+      <figure style="margin:0">
+        <img src="images/wheel-actions.ru.png" alt="Колесо действий" loading="lazy" data-lang="ru">
+        <img src="images/wheel-actions.png" alt="The actions wheel" loading="lazy" data-lang="en">
+        <figcaption>
+          <h3 data-lang="ru">Действия</h3>
+          <h3 data-lang="en">Actions</h3>
+          <p data-lang="ru">Копировать путь и имя, открыть терминал, SHA-256.</p>
+          <p data-lang="en">Copy path, copy name, open a terminal, SHA-256.</p>
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="shell">
+    <h2 data-lang="ru">Что ещё умеет</h2>
+    <h2 data-lang="en">What else it does</h2>
+
+    <div class="features">
+      <article>
+        <h3 data-lang="ru">Сто файлов как один</h3>
+        <h3 data-lang="en">A hundred files like one</h3>
+        <p data-lang="ru">Выделите целую папку фотографий — задачи встанут в очередь и выполнятся в
+          фоне, а ход работы видно в маленькой панели в углу.</p>
+        <p data-lang="en">Select a whole folder of photos: the jobs queue up and run in the
+          background, with progress in a small panel in the corner.</p>
+      </article>
+      <article>
+        <h3 data-lang="ru">Свои секторы</h3>
+        <h3 data-lang="en">Your own slices</h3>
+        <p data-lang="ru">«Web 1920» как JPEG качества 82 без метаданных или «Подкаст» как MP3
+          128 кбит/с. Пресет получает свой сектор, а результат — его имя:
+          photo (Web 1920).jpg.</p>
+        <p data-lang="en">“Web 1920” as JPEG at quality 82 with no metadata, or “Podcast” as
+          128 kbit/s MP3. A preset gets a slice of its own, and the result its name:
+          photo (Web 1920).jpg.</p>
+      </article>
+      <article>
+        <h3 data-lang="ru">Папки, которые конвертируют сами</h3>
+        <h3 data-lang="en">Folders that convert by themselves</h3>
+        <p data-lang="ru">Скажите, что делать с папкой, — и всё, что туда попадёт, будет
+          сконвертировано. Konvir дождётся, пока загрузка или копирование закончатся.</p>
+        <p data-lang="en">Tell Konvir what a folder is for, and whatever lands in it gets
+          converted. A download or a slow copy is waited out until it is complete.</p>
+      </article>
+      <article>
+        <h3 data-lang="ru">Перетащите на колесо</h3>
+        <h3 data-lang="en">Drop on the wheel</h3>
+        <p data-lang="ru">Ничего не выделено — колесо откроется пустым, как цель. Бросьте на него
+          файлы из любого окна, и оно заполнится.</p>
+        <p data-lang="en">With nothing selected the wheel opens empty, as a target. Drop files on it
+          from any window and it fills in.</p>
+      </article>
+      <article>
+        <h3 data-lang="ru">Колесо под себя</h3>
+        <h3 data-lang="en">A wheel of your own</h3>
+        <p data-lang="ru">Правый клик по сектору двигает его в начало или убирает совсем. Своё
+          сочетание клавиш, своя папка для результатов, качество для каждого вида файлов.</p>
+        <p data-lang="en">Right-click a slice to move it to the front or take it off. Your own
+          shortcut, your own folder for results, the quality of each kind of file.</p>
+      </article>
+      <article>
+        <h3 data-lang="ru">Не мешает</h3>
+        <h3 data-lang="en">Out of your way</h3>
+        <p data-lang="ru">Живёт в трее или строке меню, следует светлой и тёмной теме системы,
+          говорит по-русски и по-английски и обновляется сам, когда вы его закрываете.</p>
+        <p data-lang="en">Lives in the tray or the menu bar, follows the system's light and dark
+          theme, speaks English and Russian, and updates itself when you close it.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="formats">
+  <div class="shell">
+    <h2 data-lang="ru">Форматы</h2>
+    <h2 data-lang="en">Formats</h2>
+    <p class="lead" data-lang="ru">Изображения, PDF, таблицы, субтитры и архивы работают без единой
+      установки. Медиа и офисные форматы обрабатывают FFmpeg, Pandoc и LibreOffice — Konvir ставит
+      их по кнопке, от их собственных авторов.</p>
+    <p class="lead" data-lang="en">Images, PDF, spreadsheets, subtitles and archives work with nothing
+      installed. Media and office formats are handled by FFmpeg, Pandoc and LibreOffice, which
+      Konvir installs at the press of a button, from their own publishers.</p>
+
+    <dl class="formats">
+      <div>
+        <dt data-lang="ru">Изображения</dt><dt data-lang="en">Images</dt>
+        <dd class="src" data-lang="ru">JPG, PNG, WEBP, HEIC, TIFF, AVIF, BMP, GIF, SVG, ICO и 25 raw-форматов</dd>
+        <dd class="src" data-lang="en">JPG, PNG, WEBP, HEIC, TIFF, AVIF, BMP, GIF, SVG, ICO and 25 raw formats</dd>
+        <dd class="out">JPG, PNG, WEBP, AVIF, TIFF, ICO, PDF</dd>
+      </div>
+      <div>
+        <dt data-lang="ru">Аудио</dt><dt data-lang="en">Audio</dt>
+        <dd class="src">MP3, M4A, AAC, WAV, FLAC, OGG, OPUS, AIFF, WMA</dd>
+        <dd class="out">MP3, M4A, WAV, FLAC, OGG, OPUS, AIFF</dd>
+      </div>
+      <div>
+        <dt data-lang="ru">Видео</dt><dt data-lang="en">Video</dt>
+        <dd class="src">MP4, MOV, MKV, WEBM, AVI, WMV, FLV, MPG, 3GP, TS</dd>
+        <dd class="out">MP4, MOV, MKV, WEBM, GIF, MP3</dd>
+      </div>
+      <div>
+        <dt data-lang="ru">Документы</dt><dt data-lang="en">Documents</dt>
+        <dd class="src">DOCX, DOC, ODT, RTF, MD, TXT, HTML, EPUB</dd>
+        <dd class="out">DOCX, PDF, ODT, MD, HTML, TXT, EPUB, RTF</dd>
+      </div>
+      <div>
+        <dt data-lang="ru">Таблицы</dt><dt data-lang="en">Spreadsheets</dt>
+        <dd class="src">XLSX, XLSM, XLS, ODS, CSV, TSV</dd>
+        <dd class="out">XLSX, CSV, TSV, ODS, PDF</dd>
+      </div>
+      <div>
+        <dt data-lang="ru">Презентации</dt><dt data-lang="en">Slides</dt>
+        <dd class="src">PPTX, PPT, ODP</dd>
+        <dd class="out">PDF, PNG, JPG, PPTX, ODP</dd>
+      </div>
+      <div>
+        <dt data-lang="ru">Субтитры</dt><dt data-lang="en">Subtitles</dt>
+        <dd class="src">SRT, VTT</dd>
+        <dd class="out">SRT, VTT, TXT</dd>
+      </div>
+      <div>
+        <dt data-lang="ru">Архивы</dt><dt data-lang="en">Archives</dt>
+        <dd class="src">ZIP, TAR, GZ, BZ2, XZ, RAR, 7Z</dd>
+        <dd class="out">ZIP, TAR, TAR.GZ</dd>
+      </div>
+      <div>
+        <dt>PDF</dt>
+        <dd class="src">PDF</dd>
+        <dd class="out">PNG, JPG, DOCX, TXT, MD, HTML, EPUB</dd>
+      </div>
+    </dl>
+  </div>
+</section>
+
+<section id="tech">
+  <div class="shell">
+    <h2 data-lang="ru">Из чего сделан</h2>
+    <h2 data-lang="en">What it is built with</h2>
+    <p class="lead" data-lang="ru">Одна кодовая база на .NET для обеих систем, нативный слой под
+      каждую и проверенные библиотеки для каждого вида файлов.</p>
+    <p class="lead" data-lang="en">One .NET code base for both systems, a native layer for each, and
+      proven libraries for every kind of file.</p>
+
+    <dl class="stack">
+      <div>
+        <dt>.NET 10</dt>
+        <dd data-lang="ru">Самодостаточная сборка под каждую систему — ставить ничего не нужно.</dd>
+        <dd data-lang="en">A self-contained build for each system: nothing else to install.</dd>
+      </div>
+      <div>
+        <dt>Avalonia</dt>
+        <dd data-lang="ru">Интерфейс; колесо нарисовано вручную на её холсте.</dd>
+        <dd data-lang="en">The interface; the wheel is drawn by hand on its canvas.</dd>
+      </div>
+      <div>
+        <dt>Velopack</dt>
+        <dd data-lang="ru">Установщики и тихие обновления.</dd>
+        <dd data-lang="en">Installers and quiet updates.</dd>
+      </div>
+      <div>
+        <dt>ImageMagick</dt>
+        <dd data-lang="ru">Изображения, включая HEIC, AVIF и raw-форматы камер.</dd>
+        <dd data-lang="en">Images, HEIC, AVIF and camera raw formats included.</dd>
+      </div>
+      <div>
+        <dt>PDFium · PdfPig · PDFsharp</dt>
+        <dd data-lang="ru">PDF в картинки и текст, склейка и поворот страниц.</dd>
+        <dd data-lang="en">PDF to images and text, merging and rotating pages.</dd>
+      </div>
+      <div>
+        <dt>ClosedXML · ExcelDataReader · SharpCompress</dt>
+        <dd data-lang="ru">Таблицы Excel и архивы RAR, 7Z, TAR и другие.</dd>
+        <dd data-lang="en">Excel spreadsheets, and RAR, 7Z, TAR and other archives.</dd>
+      </div>
+      <div>
+        <dt>FFmpeg · Pandoc · LibreOffice</dt>
+        <dd data-lang="ru">Аудио, видео и документы — отдельными программами от их авторов.</dd>
+        <dd data-lang="en">Audio, video and documents, run as separate programs from their own publishers.</dd>
+      </div>
+      <div>
+        <dt>Win32 · AppKit</dt>
+        <dd data-lang="ru">Горячая клавиша, выделение в Проводнике и Finder, уведомления.</dd>
+        <dd data-lang="en">The shortcut, the selection in Explorer and Finder, notifications.</dd>
+      </div>
+    </dl>
+
+    <ul class="tags" aria-label="Tags">
+      <li><a href="https://github.com/topics/file-converter">#file-converter</a></li>
+      <li><a href="https://github.com/topics/radial-menu">#radial-menu</a></li>
+      <li><a href="https://github.com/topics/image-converter">#image-converter</a></li>
+      <li><a href="https://github.com/topics/video-converter">#video-converter</a></li>
+      <li><a href="https://github.com/topics/audio-converter">#audio-converter</a></li>
+      <li><a href="https://github.com/topics/pdf-converter">#pdf-converter</a></li>
+      <li><a href="https://github.com/topics/heic">#heic</a></li>
+      <li><a href="https://github.com/topics/webp">#webp</a></li>
+      <li><a href="https://github.com/topics/ffmpeg">#ffmpeg</a></li>
+      <li><a href="https://github.com/topics/pandoc">#pandoc</a></li>
+      <li><a href="https://github.com/topics/freeware">#freeware</a></li>
+      <li><a href="https://github.com/topics/windows">#windows</a></li>
+      <li><a href="https://github.com/topics/macos">#macos</a></li>
+      <li><a href="https://github.com/topics/avalonia">#avalonia</a></li>
+      <li><a href="https://github.com/topics/dotnet">#dotnet</a></li>
+    </ul>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="shell">
+    <h2 data-lang="ru">Вопросы</h2>
+    <h2 data-lang="en">Questions</h2>
+
+    <div class="faq" data-lang="ru">
+      <details>
+        <summary>Это правда бесплатно?</summary>
+        <p>Да. Нет пробного периода, который закончится, нет функций за оплату и нет ключа, который
+          надо вводить. Пользуйтесь дома или на работе, на скольких угодно компьютерах.</p>
+      </details>
+      <details>
+        <summary>Мои файлы куда-то отправляются?</summary>
+        <p>Нет. Всё считается на вашем компьютере. В интернет Konvir ходит только проверить свои
+          обновления и скачать FFmpeg или Pandoc, когда вы нажмёте кнопку.</p>
+      </details>
+      <details>
+        <summary>Работает без интернета?</summary>
+        <p>Да. Когда нужные программы установлены, интернет Konvir не нужен вовсе.</p>
+      </details>
+      <details>
+        <summary>Почему Windows и macOS предупреждают при запуске?</summary>
+        <p>Konvir пока не подписан платным сертификатом. Нажмите «Подробнее → Выполнить в любом
+          случае» в Windows или «Все равно открыть» в настройках конфиденциальности macOS. В каждом
+          релизе указана SHA-256 каждого файла, так что загрузку можно сверить.</p>
+      </details>
+      <details>
+        <summary>А Linux?</summary>
+        <p>В работе. Ядро и интерфейс уже кроссплатформенные; не хватает нативного слоя —
+          контекстного меню файлового менеджера и горячей клавиши.</p>
+      </details>
+      <details>
+        <summary>Это открытый код?</summary>
+        <p>Нет: программа бесплатная, исходники закрыты. Публикуются релизы, их контрольные суммы и
+          лицензии всего, из чего Konvir собран.</p>
+      </details>
+    </div>
+
+    <div class="faq" data-lang="en">
+      <details>
+        <summary>Is it really free?</summary>
+        <p>Yes. There is no trial that runs out, no feature behind a payment and no key to enter.
+          Use it at home or at work, on as many computers as you like.</p>
+      </details>
+      <details>
+        <summary>Are my files sent anywhere?</summary>
+        <p>No. Everything is converted on your computer. Konvir goes online only to check for its
+          own updates, and to download FFmpeg or Pandoc when you press the button.</p>
+      </details>
+      <details>
+        <summary>Does it work offline?</summary>
+        <p>Yes. Once the programs it needs are installed, Konvir needs no internet at all.</p>
+      </details>
+      <details>
+        <summary>Why do Windows and macOS warn on first run?</summary>
+        <p>Konvir is not signed with a paid certificate yet. Choose “More info → Run anyway” on
+          Windows, or “Open Anyway” in the macOS privacy settings. Every release lists the SHA-256
+          of each file, so you can check your download.</p>
+      </details>
+      <details>
+        <summary>What about Linux?</summary>
+        <p>In progress. The core and the interface are already cross-platform; what is missing is
+          the native layer — the file manager's context menu and the shortcut.</p>
+      </details>
+      <details>
+        <summary>Is it open source?</summary>
+        <p>No: the program is free, the source code is private. What is published is the releases,
+          their checksums and the licences of everything Konvir is built from.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section id="ideas" class="ideas">
+  <div class="shell">
+    <div>
+      <h2 data-lang="ru">Чего не хватает?</h2>
+      <h2 data-lang="en">What is missing?</h2>
+      <p class="lead" data-lang="ru">Konvir растёт из того, о чём просят. Формат, сектор на каждый
+        день, колесо, которое должно вести себя иначе, — напишите. Идея откроется на GitHub уже
+        заполненной: останется проверить и нажать «Submit new issue». Нужен бесплатный аккаунт
+        GitHub; пока вы не нажмёте кнопку там, ничего не отправляется.</p>
+      <p class="lead" data-lang="en">Konvir grows from what people ask for. A format, a slice you
+        would use every day, a wheel that should behave differently — write it down. The idea opens
+        on GitHub already filled in: check it and press “Submit new issue”. A free GitHub account is
+        needed; nothing is sent until you press the button there.</p>
+      <p class="terms note" data-lang="ru">Уже предложенное — в
+        <a href="https://github.com/KROWIEL/konvir/issues?q=label%3Aenhancement">списке идей</a>.
+        Что-то сломалось? <a href="https://github.com/KROWIEL/konvir/issues/new?template=bug.yml">Сообщите об ошибке</a>.</p>
+      <p class="terms note" data-lang="en">Ideas already suggested are
+        <a href="https://github.com/KROWIEL/konvir/issues?q=label%3Aenhancement">on the list</a>.
+        Something broken? <a href="https://github.com/KROWIEL/konvir/issues/new?template=bug.yml">Report a bug</a>.</p>
+    </div>
+
+    <form id="idea-form">
+      <label>
+        <span data-lang="ru">Коротко</span><span data-lang="en">In a few words</span>
+        <input name="title" required maxlength="120" autocomplete="off"
+               data-ru="Например: конвертация в JPEG XL" data-en="For example: convert to JPEG XL">
+      </label>
+      <label>
+        <span data-lang="ru">Подробнее</span><span data-lang="en">In more detail</span>
+        <textarea name="idea" required maxlength="3000"
+                  data-ru="Что должно происходить, когда вы нажимаете сектор?"
+                  data-en="What should happen when you click the slice?"></textarea>
+      </label>
+      <label>
+        <span><span data-lang="ru">Для чего это вам</span><span data-lang="en">What you would use it for</span>
+          <small data-lang="ru">— необязательно</small><small data-lang="en">— optional</small></span>
+        <textarea name="why" maxlength="2000"
+                  data-ru="Какие файлы, в какой ситуации"
+                  data-en="Which files, in what situation"></textarea>
+      </label>
+      <div class="row">
+        <button class="button" type="submit">
+          <span data-lang="ru">Открыть на GitHub</span><span data-lang="en">Open on GitHub</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="shell">
+    <a href="https://github.com/KROWIEL/konvir">GitHub</a>
+    <a href="https://github.com/KROWIEL/konvir/releases" data-lang="ru">Все версии</a>
+    <a href="https://github.com/KROWIEL/konvir/releases" data-lang="en">All releases</a>
+    <a href="https://github.com/KROWIEL/konvir/issues/new?template=bug.yml" data-lang="ru">Сообщить об ошибке</a>
+    <a href="https://github.com/KROWIEL/konvir/issues/new?template=bug.yml" data-lang="en">Report a bug</a>
+    <a href="https://github.com/KROWIEL/konvir/blob/main/LICENSE" data-lang="ru">Лицензия</a>
+    <a href="https://github.com/KROWIEL/konvir/blob/main/LICENSE" data-lang="en">Licence</a>
+    <a href="https://github.com/KROWIEL/konvir/blob/main/THIRD-PARTY-NOTICES.md" data-lang="ru">Сторонние компоненты</a>
+    <a href="https://github.com/KROWIEL/konvir/blob/main/THIRD-PARTY-NOTICES.md" data-lang="en">Third-party notices</a>
+    <span class="rights" data-lang="ru">© 2026 Konvir · бесплатно</span>
+    <span class="rights" data-lang="en">© 2026 Konvir · free</span>
+  </div>
+</footer>
+
+<script>
+  // Anything that is an attribute rather than text cannot be hidden by language, so it carries
+  // both translations and is given the right one here: the wheel's name and the placeholders.
+  const translate = () => {
+    const lang = document.documentElement.lang;
+    document.querySelector('.wheel').setAttribute('aria-label', document.querySelector('.wheel').dataset[lang]);
+    for (const field of document.querySelectorAll('input[data-ru], textarea[data-ru]'))
+      field.placeholder = field.dataset[lang];
+  };
+  translate();
+
+  document.querySelector('.langs').addEventListener('click', e => {
+    if (!e.target.value) return;
+    localStorage.setItem('konvir-lang', e.target.value);
+    document.documentElement.lang = e.target.value;
+    translate();
+  });
+
+  // GitHub fills an issue form from query parameters named after its field ids, so the idea
+  // arrives in the template's own fields rather than as one undivided body.
+  document.getElementById('idea-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const form = new FormData(e.target);
+    const url = new URL('https://github.com/KROWIEL/konvir/issues/new?template=idea.yml');
+    for (const name of ['title', 'idea', 'why']) {
+      const value = String(form.get(name) || '').trim();
+      if (value) url.searchParams.set(name, value);
+    }
+    window.open(url, '_blank', 'noopener');
+  });
+</script>
+
+</body>
+</html>

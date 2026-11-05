@@ -1,0 +1,44 @@
+name: Bug · Ошибка
+description: Something does not work as it should. Что-то работает не так, как должно.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened? · Что случилось?
+      description: And what you expected instead. И что вы ожидали вместо этого.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to make it happen again · Как повторить
+      placeholder: |
+        1. Select a .heic photo · Выделить фото .heic
+        2. Open the wheel, choose JPG · Открыть колесо, выбрать JPG
+        3. ...
+  - type: input
+    id: version
+    attributes:
+      label: Konvir version · Версия Konvir
+      description: At the bottom of the settings window. Внизу окна настроек.
+      placeholder: "0.14.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: system
+    attributes:
+      label: System · Система
+      options:
+        - Windows 11
+        - Windows 10
+        - macOS
+        - Linux
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log · Журнал
+      description: If Konvir crashed, the Log button next to the version in the settings opens it. Если Konvir упал, кнопка «Журнал» рядом с версией в настройках откроет его.
+      render: text
