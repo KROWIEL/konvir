@@ -1,0 +1,31 @@
+name: Idea · Идея
+description: A format, a slice or anything that would make Konvir better. Формат, сектор или что угодно, что сделает Konvir лучше.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time. Before writing, have a look at the [ideas already suggested](https://github.com/KROWIEL/konvir/issues?q=label%3Aenhancement) — a thumbs-up on one counts too.
+
+        Спасибо, что нашли время. Загляните сначала в [уже предложенное](https://github.com/KROWIEL/konvir/issues?q=label%3Aenhancement) — палец вверх под чужой идеей тоже считается.
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like? · Что хотелось бы?
+      description: One idea per issue, please. По одной идее за раз, пожалуйста.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: What would you use it for? · Для чего это вам?
+      description: The files and the situation behind it help more than anything. Какие файлы и в какой ситуации — это помогает больше всего.
+  - type: dropdown
+    id: system
+    attributes:
+      label: System · Система
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Any · Любая

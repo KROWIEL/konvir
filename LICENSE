@@ -2,15 +2,28 @@ Konvir
 
 Copyright (c) 2026 Andrey Krowiel. All rights reserved.
 
-This software and its source code are proprietary and confidential.
+Konvir is free software in the sense of free of charge: it costs nothing, has no
+trial period, no paid edition and no licence key. Its source code is not published.
 
-No licence is granted to any person to copy, modify, merge, publish, distribute,
-sublicense, sell, or create derivative works of this software, in whole or in
-part, except under the terms of a separate written agreement with the copyright
-holder, or as expressly permitted by applicable mandatory law.
+Permission is granted, free of charge, to any person who obtains the Konvir
+installers or archives published at https://github.com/KROWIEL/konvir/releases to
+install and use them on any number of computers, for any purpose, personal or
+commercial.
 
-Use of compiled Konvir binaries is governed by the End User Licence Agreement
-supplied with the product.
+You may also pass on unmodified copies of those files, provided nobody is charged
+for them. A link to the releases page is better still: it always leads to the
+latest version.
+
+You may not sell Konvir, bundle it into a product you charge for, or distribute a
+modified copy of it. No licence is granted to the source code, and nothing in this
+notice grants any right to the Konvir name or logo.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHOR OR COPYRIGHT
+HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 This software incorporates third-party components, including code derived from
 the Sweetch project, which are licensed separately by their respective owners.

@@ -86,5 +86,4 @@ command-line interfaces. Konvir does not link against them.
 | [LibreOffice](https://www.libreoffice.org) | Office files to PDF | MPL-2.0 |
 
 This separation is deliberate and must be preserved: bundling these programs into the distribution,
-or linking against their libraries, changes the licensing obligations substantially. See
-`docs/PLAN.md` for details.
+or linking against their libraries, changes the licensing obligations substantially.
